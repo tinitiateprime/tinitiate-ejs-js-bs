@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Builder | <%= data.site.title %></title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+      :root {
+        --app-bg: #eef3f8;
+        --panel: #ffffff;
+        --panel-soft: #f8fafc;
+        --line: #d9e4ef;
+        --text: #142033;
+        --muted: #66758a;
+        --primary: #2563eb;
+        --secondary: #0f766e;
+        --warning: #c27803;
+        --danger: #dc2626;
+        --shadow: 0 16px 40px rgba(20, 32, 51, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        overflow: hidden;
+        color: var(--text);
+        background: var(--app-bg);
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      .app-shell {
+        height: 100vh;
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+      }
+
+      .builder-header {
+        min-height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .brand-block {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .brand-icon {
+        flex: 0 0 auto;
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        color: #fff;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+      }
+
+      .brand-title {
+        max-width: 340px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 700;
+      }
+
+      .brand-source {
+        color: var(--muted);
+        font-size: 0.8125rem;
+      }
+
+      .builder-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+      }
+
+      .template-select {
+        min-width: 180px;
+      }
+
+      .tabbar {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .tabbar .btn {
+        border-radius: 8px;
+      }
+
+      .tabbar .active {
+        color: #fff;
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+
+      .workspace {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr) 300px;
+      }
+
+      .sidebar,
+      .section-panel {
+        min-width: 0;
+        overflow: auto;
+        padding: 1rem;
+        border-right: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .section-panel {
+        border-right: 0;
+        border-left: 1px solid var(--line);
+      }
+
+      .panel-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .panel-heading h2 {
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.2;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 800;
+      }
+
+      .page-tree {
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .page-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.35rem;
+        align-items: center;
+      }
+
+      .page-button {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        min-height: 38px;
+        padding: 0.45rem 0.6rem;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: var(--text);
+        background: transparent;
+        text-align: left;
+      }
+
+      .page-button:hover,
+      .page-button.active {
+        border-color: rgba(37, 99, 235, 0.18);
+        background: rgba(37, 99, 235, 0.08);
+      }
+
+      .page-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .page-path {
+        display: block;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .icon-button {
+        width: 34px;
+        height: 34px;
+        display: inline-grid;
+        place-items: center;
+        padding: 0;
+        border-radius: 8px;
+      }
+
+      .canvas-wrap {
+        min-width: 0;
+        min-height: 0;
+        overflow: auto;
+        padding: 1rem;
+      }
+
+      .view-panel {
+        display: none;
+        min-height: 100%;
+      }
+
+      .view-panel.active {
+        display: block;
+      }
+
+      .canvas {
+        max-width: 940px;
+        min-height: calc(100vh - 210px);
+        margin: 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: var(--shadow);
+      }
+
+      .canvas-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--line);
+        background: #fbfdff;
+      }
+
+      .canvas-page-title {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .canvas-page-path {
+        color: var(--muted);
+        font-size: 0.8125rem;
+      }
+
+      .section-list {
+        display: grid;
+        gap: 0.75rem;
+        padding: 1rem;
+      }
+
+      .section-block {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .section-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.65rem 0.75rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .section-title {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+      }
+
+      .section-title span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .section-actions {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .section-preview {
+        padding: 1rem;
+      }
+
+      .preview-hero {
+        display: grid;
+        gap: 0.65rem;
+        padding: 1rem;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(15, 118, 110, 0.08));
+      }
+
+      .preview-title {
+        font-weight: 800;
+        font-size: 1.15rem;
+      }
+
+      .preview-copy {
+        color: var(--muted);
+      }
+
+      .mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.65rem;
+      }
+
+      .mini-card {
+        min-height: 86px;
+        padding: 0.75rem;
+        border: 1px solid #e1e9f2;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .mini-card-title {
+        overflow-wrap: anywhere;
+        font-weight: 700;
+        font-size: 0.875rem;
+      }
+
+      .mini-card-text {
+        margin-top: 0.35rem;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .empty-state {
+        padding: 2rem;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .section-type-list {
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      .section-type-button {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.65rem;
+        width: 100%;
+        min-height: 46px;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--text);
+        background: #fff;
+        text-align: left;
+      }
+
+      .section-type-button:hover {
+        border-color: rgba(37, 99, 235, 0.42);
+        background: rgba(37, 99, 235, 0.05);
+      }
+
+      .section-type-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 700;
+      }
+
+      .json-view,
+      .structure-view {
+        max-width: 1080px;
+        margin: 0 auto;
+      }
+
+      .json-box {
+        min-height: calc(100vh - 220px);
+        padding: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: #dbeafe;
+        background: #111827;
+        font-size: 0.8125rem;
+        white-space: pre-wrap;
+        overflow: auto;
+      }
+
+      .structure-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .structure-card + .structure-card {
+        margin-top: 0.75rem;
+      }
+
+      .structure-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .structure-card-body {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 1rem;
+      }
+
+      .statusbar {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.35rem 1rem;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        background: var(--panel);
+        font-size: 0.8125rem;
+      }
+
+      .toast-area {
+        position: fixed;
+        right: 1rem;
+        bottom: 3rem;
+        z-index: 1080;
+        display: grid;
+        gap: 0.5rem;
+        width: min(360px, calc(100vw - 2rem));
+      }
+
+      @media (max-width: 1199.98px) {
+        .workspace {
+          grid-template-columns: 240px minmax(0, 1fr);
+        }
+
+        .section-panel {
+          display: none;
+        }
+      }
+
+      @media (max-width: 767.98px) {
+        body {
+          overflow: auto;
+        }
+
+        .app-shell {
+          min-height: 100vh;
+          height: auto;
+          grid-template-rows: auto auto auto auto;
+        }
+
+        .builder-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .builder-actions {
+          width: 100%;
+          justify-content: flex-start;
+          flex-wrap: wrap;
+        }
+
+        .workspace {
+          display: block;
+        }
+
+        .sidebar {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .canvas-wrap {
+          padding: 0.75rem;
+        }
+
+        .canvas {
+          min-height: auto;
+        }
+
+        .mini-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="builder-header">
+        <div class="brand-block">
+          <div class="brand-icon"><i class="bi bi-bootstrap"></i></div>
+          <div class="min-w-0">
+            <div class="brand-title"><%= data.site.title %></div>
+            <div class="brand-source"><%= data.site.source.repository %></div>
+          </div>
+        </div>
+        <div class="builder-actions">
+          <select class="form-select form-select-sm template-select" id="templateSelect" aria-label="Template">
+            <% data.templates.forEach((template) => { %>
+              <option value="<%= template.id %>" <%= template.id === data.template.id ? 'selected' : '' %>><%= template.name %></option>
+            <% }) %>
+          </select>
+          <button class="btn btn-sm btn-outline-secondary" type="button" id="refreshBtn" title="Refresh GitHub data">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-primary" type="button" id="previewBtn">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Preview
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" type="button" id="exportBtn">
+            <i class="bi bi-filetype-json me-1"></i> Export
+          </button>
+          <button class="btn btn-sm btn-outline-danger" type="button" id="resetBtn">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+          </button>
+        </div>
+      </header>
+
+      <nav class="tabbar" aria-label="Builder views">
+        <button class="btn btn-sm active" type="button" data-view="builder">Builder</button>
+        <button class="btn btn-sm btn-light" type="button" data-view="structure">Structure</button>
+        <button class="btn btn-sm btn-light" type="button" data-view="json">JSON</button>
+      </nav>
+
+      <main class="workspace">
+        <aside class="sidebar">
+          <div class="panel-heading">
+            <h2>Pages</h2>
+            <button class="btn btn-sm btn-primary icon-button" type="button" id="addPageBtn" title="Add page">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+          <div class="page-tree" id="pageTree"></div>
+        </aside>
+
+        <section class="canvas-wrap">
+          <div class="view-panel active" id="builderView">
+            <div class="canvas">
+              <div class="canvas-header">
+                <div>
+                  <h1 class="canvas-page-title" id="canvasPageTitle"></h1>
+                  <div class="canvas-page-path" id="canvasPagePath"></div>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" type="button" id="addSectionShortcut">
+                  <i class="bi bi-plus-lg me-1"></i> Section
+                </button>
+              </div>
+              <div class="section-list" id="canvasSections"></div>
+            </div>
+          </div>
+
+          <div class="view-panel" id="structureView">
+            <div class="structure-view" id="structureContent"></div>
+          </div>
+
+          <div class="view-panel" id="jsonView">
+            <div class="json-view">
+              <pre class="json-box" id="jsonState"></pre>
+            </div>
+          </div>
+        </section>
+
+        <aside class="section-panel" id="sectionPanel">
+          <div class="panel-heading">
+            <h2>Add Section</h2>
+            <span class="badge text-bg-light" id="sectionCount"></span>
+          </div>
+          <div class="section-type-list" id="sectionTypeList"></div>
+        </aside>
+      </main>
+
+      <footer class="statusbar">
+        <span id="footerStatus"></span>
+        <span id="cacheStatus"></span>
+      </footer>
+    </div>
+
+    <div class="modal fade" id="addPageModal" tabindex="-1" aria-labelledby="addPageModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="addPageModalLabel">Add Page</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <label class="form-label" for="pageTitleInput">Title</label>
+            <input class="form-control" id="pageTitleInput" type="text" autocomplete="off">
+            <label class="form-label mt-3" for="pageParentSelect">Parent</label>
+            <select class="form-select" id="pageParentSelect"></select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="savePageBtn">Create</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="jsonModal" tabindex="-1" aria-labelledby="jsonModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="jsonModalLabel">Export JSON</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <pre class="json-box mb-0" id="jsonModalBody"></pre>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="copyJsonBtn">
+              <i class="bi bi-clipboard me-1"></i> Copy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-area" id="toastArea"></div>
+
+    <script>
+      window.__INIT__ = <%- initialJson %>;
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/builder.js"></script>
+  </body>
+</html>
+
+

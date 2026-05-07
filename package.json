@@ -1,0 +1,22 @@
+{
+  "name": "mini-website-builder",
+  "version": "1.0.0",
+  "description": "Bootstrap mini website builder powered by GitHub-hosted data.json and theme.json files.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "node -e \"console.log('Netlify build uses the Express serverless function.')\""
+  },
+  
+  "dependencies": {
+    "axios": "^1.7.9",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
+
