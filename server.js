@@ -2,9 +2,11 @@ const express = require("express");
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const ejs = require("ejs");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const DEFAULT_PORT = 3000;
+const PORT = Number(process.env.PORT || DEFAULT_PORT);
 
 function projectPath(...parts) {
   const candidates = [
@@ -106,6 +108,7 @@ const TEMPLATES = [
   }
 ];
 
+app.engine("ejs", ejs.__express);
 app.set("view engine", "ejs");
 app.set("views", projectPath("views"));
 app.use(express.json({ limit: "1mb" }));
@@ -1013,7 +1016,32 @@ app.use((error, req, res, next) => {
 module.exports = app;
 
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Mini website builder running at http://localhost:${PORT}`);
-  });
+  const allowPortFallback = !process.env.PORT;
+
+  function startServer(port, remainingAttempts = 10) {
+    const server = app.listen(port, () => {
+      const address = server.address();
+      const activePort = typeof address === "object" && address ? address.port : port;
+      console.log(`Mini website builder running at http://localhost:${activePort}`);
+    });
+
+    server.on("error", (error) => {
+      if (error.code === "EADDRINUSE" && allowPortFallback && remainingAttempts > 0) {
+        const nextPort = port + 1;
+        console.warn(`Port ${port} is already in use. Trying http://localhost:${nextPort}`);
+        startServer(nextPort, remainingAttempts - 1);
+        return;
+      }
+
+      if (error.code === "EADDRINUSE") {
+        console.error(`Port ${port} is already in use. Stop that process or set PORT to another value.`);
+      } else {
+        console.error(error);
+      }
+
+      process.exit(1);
+    });
+  }
+
+  startServer(PORT);
 }
